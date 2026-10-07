@@ -1,0 +1,74 @@
+/* Custom styles and animations */
+
+.glow-amber-light {
+  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.7)) drop-shadow(0 0 45px rgba(245, 158, 11, 0.4));
+}
+
+.rainbow-slider {
+  background: linear-gradient(
+    to right,
+    #ff0000 0%,
+    #ffff00 17%,
+    #00ff00 33%,
+    #00ffff 50%,
+    #0000ff 67%,
+    #ff00ff 83%,
+    #ff0000 100%
+  );
+}
+
+/* Hue range thumb styling */
+.rainbow-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+}
+
+.rainbow-slider::-moz-range-thumb {
+  width: 14px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+}
+
+/* Pulse animation for active online dots */
+@keyframes soft-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.5s infinite ease-in-out;
+}
+
+/* Hide spin-buttons in number inputs for cleaner UI */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Prevent default scrolling while dragging spectrum on mobile/touch */
+.spectrum-canvas {
+  touch-action: none;
+}
