@@ -248,47 +248,51 @@
           </div>
         </div>
 
-        <!-- Middle Section: Concentric Color Orb & Spectrum Picker -->
-        <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 xl:gap-7 items-center my-auto py-2 min-h-0">
-          
-          <!-- Column Left: Glowing Orb Indicator (5 cols) -->
-          <div class="md:col-span-5 flex flex-col items-center justify-center">
-            <div class="relative w-52 h-52 sm:w-60 sm:h-60 xl:w-68 xl:h-68 flex items-center justify-center">
-              
-              <!-- Outer Dashed Circle -->
-              <div class="absolute inset-0 rounded-full border border-dashed border-slate-800/80"></div>
-              
-              <!-- Middle Colored Glow Ring -->
-              <div 
-                class="absolute inset-5 rounded-full border transition-all duration-300"
-                [style.borderColor]="ws2812On() ? 'rgba(' + r() + ',' + g() + ',' + b() + ', 0.35)' : '#1e293b'"
-                [style.boxShadow]="ws2812On() ? '0 0 35px rgba(' + r() + ',' + g() + ',' + b() + ', 0.3)' : 'none'"
-              ></div>
+        <!-- Center Visualizer: Color Wheel with Central Selected Color -->
+        <div class="flex-1 flex flex-col items-center justify-center py-3 min-h-0">
+          <div class="relative w-64 h-64 sm:w-72 sm:h-72 xl:w-80 xl:h-80 flex items-center justify-center">
 
-              <!-- Inner Glowing Orb -->
-              <div 
-                class="w-28 h-28 sm:w-32 sm:h-32 xl:w-36 xl:h-36 rounded-full transition-all duration-300 flex items-center justify-center"
-                [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#0b111e'"
-                [style.boxShadow]="ws2812On() 
-                  ? '0 0 55px 14px rgba(' + r() + ',' + g() + ',' + b() + ', 0.65), inset 0 2px 6px rgba(255,255,255,0.45)' 
-                  : 'inset 0 2px 6px rgba(0,0,0,0.8)'"
-                [style.border]="ws2812On() ? 'none' : '1px solid #1e293b'"
-              ></div>
-            </div>
+            <!-- The Interactive Conic Color Wheel Ring -->
+            <div 
+              class="color-wheel absolute inset-0"
+              (pointerdown)="onWheelPointerDown($event)"
+              (pointermove)="onWheelPointerMove($event)"
+              (pointerup)="onWheelPointerUp($event)"
+              (pointercancel)="onWheelPointerUp($event)"
+              role="slider"
+              tabindex="0"
+              aria-label="Color hue wheel"
+              [attr.aria-valuenow]="hue()"
+              [style.opacity]="ws2812On() ? '1' : '0.45'"
+            >
+              <!-- Color ring track with donut mask -->
+              <div class="color-wheel-track"></div>
 
-            <!-- Hex code and native picker button -->
-            <div class="mt-4 text-center flex flex-col items-center">
-              <label 
-                class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition-colors"
-                title="Click to open system color picker"
+              <!-- Rotating Handle layer indicating selected color on the ring -->
+              <div 
+                class="hue-wheel-handle-layer pointer-events-none" 
+                [style.transform]="'rotate(' + hue() + 'deg)'"
               >
                 <span 
-                  class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" 
-                  [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#000'"
+                  class="hue-wheel-handle" 
+                  [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#64748b'"
                 ></span>
-                <span class="font-mono text-base sm:text-lg font-bold text-white tracking-wider">
-                  {{ hexColor() }}
-                </span>
+              </div>
+            </div>
+
+            <!-- Central Hole Cutout: Shows ONLY the Selected Color -->
+            <div class="absolute inset-[24%] rounded-full flex flex-col items-center justify-center pointer-events-none">
+              
+              <!-- Central Selected Color Orb -->
+              <label 
+                class="w-24 h-24 sm:w-28 sm:h-28 xl:w-32 xl:h-32 rounded-full transition-all duration-300 flex items-center justify-center pointer-events-auto cursor-pointer"
+                [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#0b111e'"
+                [style.boxShadow]="ws2812On() 
+                  ? '0 0 50px 14px rgba(' + r() + ',' + g() + ',' + b() + ', 0.65), inset 0 2px 6px rgba(255,255,255,0.45)' 
+                  : 'inset 0 2px 6px rgba(0,0,0,0.8)'"
+                [style.border]="ws2812On() ? 'none' : '1px solid #1e293b'"
+                title="Color seleccionado (Haz clic para selector del sistema)"
+              >
                 <input 
                   type="color" 
                   [value]="hexColor()" 
@@ -297,58 +301,73 @@
                   aria-label="Choose color via system picker"
                 />
               </label>
-              <span class="text-[10px] font-semibold tracking-widest text-slate-500 uppercase mt-1">LIVE OUTPUT</span>
+
             </div>
           </div>
 
-          <!-- Column Right: Color Spectrum & Controls (7 cols) -->
-          <div class="md:col-span-7 rounded-2xl bg-slate-950/70 border border-slate-800/80 p-4 sm:p-5 flex flex-col gap-3.5 xl:gap-4">
-            <div class="flex items-center justify-between">
-              <span class="text-xs sm:text-sm font-semibold text-slate-300">Color spectrum</span>
-              <span class="text-[11px] sm:text-xs text-slate-500">Drag or click to explore</span>
+          <!-- Color Output Info & Controls under the Wheel -->
+          <div class="mt-3 flex flex-col items-center gap-2.5 w-full max-w-sm">
+            <!-- Saturation & Brightness sliders -->
+            <div class="w-full flex flex-col gap-2">
+              <label class="flex items-center gap-3">
+                <span class="w-9 text-[10px] font-bold tracking-widest uppercase text-slate-500">Sat</span>
+                <input
+                  type="range" min="0" max="100" step="1"
+                  class="tone-slider flex-1"
+                  [style.background]="satTrack()"
+                  [style.--thumb]="thumbColor()"
+                  [value]="sat()"
+                  (input)="onSatChange($any($event.target).value)"
+                  (change)="onSliderRelease()"
+                  aria-label="Saturation (0-100%)"
+                />
+                <span class="w-9 text-right font-mono text-[11px] text-slate-300">{{ sat() }}%</span>
+              </label>
+              <label class="flex items-center gap-3">
+                <span class="w-9 text-[10px] font-bold tracking-widest uppercase text-slate-500">Bri</span>
+                <input
+                  type="range" min="0" max="100" step="1"
+                  class="tone-slider flex-1"
+                  [style.background]="valTrack()"
+                  [style.--thumb]="thumbColor()"
+                  [value]="val()"
+                  (input)="onValChange($any($event.target).value)"
+                  (change)="onSliderRelease()"
+                  aria-label="Brightness (0-100%)"
+                />
+                <span class="w-9 text-right font-mono text-[11px] text-slate-300">{{ val() }}%</span>
+              </label>
             </div>
 
-            <!-- 2D Saturation/Value Canvas Box (Enlarged and smooth pointer drag) -->
-            <div 
-              class="spectrum-canvas relative w-full h-36 sm:h-44 xl:h-48 rounded-xl overflow-hidden cursor-crosshair border border-slate-800/80 shadow-inner select-none"
-              (pointerdown)="onSpectrumPointerDown($event)"
-              (pointermove)="onSpectrumPointerMove($event)"
-              (pointerup)="onSpectrumPointerUp($event)"
-              role="slider"
-              tabindex="0"
-              aria-label="Color saturation and brightness picker"
-              [style.background]="'linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(' + hue() + ', 100%, 50%))'"
+            <!-- Hex output badge -->
+            <label 
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition-colors"
+              title="Click to open system color picker"
             >
-              <!-- Selector Handle Circle -->
-              <div 
-                class="absolute w-5 h-5 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.9)] -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform"
-                [style.left.%]="sat()"
-                [style.top.%]="100 - val()"
-                [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#000'"
-              ></div>
-            </div>
-
-            <!-- HUE Slider -->
-            <div class="flex items-center gap-3 pt-1">
-              <span class="text-[11px] font-mono font-bold tracking-wider text-slate-400 w-8">HUE</span>
+              <span 
+                class="w-3 h-3 rounded-full border border-white/20 shrink-0" 
+                [style.backgroundColor]="ws2812On() ? 'rgb(' + r() + ',' + g() + ',' + b() + ')' : '#334155'"
+              ></span>
+              <span class="font-mono text-sm sm:text-base font-bold text-white tracking-wider">
+                {{ ws2812On() ? hexColor() : 'OFF' }}
+              </span>
+              <span class="text-[9px] font-semibold tracking-widest text-slate-500 uppercase ml-1">OUTPUT</span>
               <input 
-                type="range" 
-                min="0" 
-                max="360" 
-                [ngModel]="hue()" 
-                (ngModelChange)="onHueChange($event)"
-                class="w-full h-3.5 rounded-full rainbow-slider focus:outline-none"
-                aria-label="Hue color slider (0 to 360)"
+                type="color" 
+                [value]="hexColor()" 
+                (change)="onNativeColorChange($event)" 
+                class="sr-only" 
+                aria-label="Choose color via system picker"
               />
-            </div>
+            </label>
 
             <!-- R, G, B Value Display Chips -->
-            <div class="grid grid-cols-3 gap-2.5 pt-1">
+            <div class="grid grid-cols-3 gap-2 w-full">
               <!-- Red Pill -->
-              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-xs sm:text-sm cursor-text focus-within:border-rose-500/50">
+              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-xs cursor-text focus-within:border-rose-500/50">
                 <div class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]"></span>
-                  <span class="text-slate-400 font-mono text-xs">R</span>
+                  <span class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]"></span>
+                  <span class="text-slate-400 font-mono text-[11px]">R</span>
                 </div>
                 <input 
                   type="number" 
@@ -357,15 +376,15 @@
                   [value]="r()" 
                   (input)="onRgbInputChange('r', $event)"
                   aria-label="Red component (0-255)"
-                  class="w-12 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
+                  class="w-10 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
                 />
               </label>
 
               <!-- Green Pill -->
-              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-xs sm:text-sm cursor-text focus-within:border-emerald-500/50">
+              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-xs cursor-text focus-within:border-emerald-500/50">
                 <div class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]"></span>
-                  <span class="text-slate-400 font-mono text-xs">G</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]"></span>
+                  <span class="text-slate-400 font-mono text-[11px]">G</span>
                 </div>
                 <input 
                   type="number" 
@@ -374,15 +393,15 @@
                   [value]="g()" 
                   (input)="onRgbInputChange('g', $event)"
                   aria-label="Green component (0-255)"
-                  class="w-12 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
+                  class="w-10 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
                 />
               </label>
 
               <!-- Blue Pill -->
-              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-xs sm:text-sm cursor-text focus-within:border-blue-500/50">
+              <label class="bg-slate-900/80 border border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-xs cursor-text focus-within:border-blue-500/50">
                 <div class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]"></span>
-                  <span class="text-slate-400 font-mono text-xs">B</span>
+                  <span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]"></span>
+                  <span class="text-slate-400 font-mono text-[11px]">B</span>
                 </div>
                 <input 
                   type="number" 
@@ -391,7 +410,7 @@
                   [value]="b()" 
                   (input)="onRgbInputChange('b', $event)"
                   aria-label="Blue component (0-255)"
-                  class="w-12 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
+                  class="w-10 bg-transparent text-right font-mono font-bold text-white focus:outline-none"
                 />
               </label>
             </div>

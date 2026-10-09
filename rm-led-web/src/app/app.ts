@@ -53,6 +53,25 @@ export class App {
     return this.rgbToHex(this.r(), this.g(), this.b());
   });
 
+  private cssRgb(h: number, s: number, v: number): string {
+    const { r, g, b } = this.hsvToRgb(h, s, v);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // Saturation track: grey/white (S=0) -> full saturation, keeping current brightness
+  readonly satTrack = computed(
+    () =>
+      `linear-gradient(to right, ${this.cssRgb(this.hue(), 0, Math.max(this.val(), 1))}, ${this.cssRgb(this.hue(), 100, Math.max(this.val(), 1))})`,
+  );
+
+  // Brightness track: black -> full brightness, keeping current saturation
+  readonly valTrack = computed(
+    () => `linear-gradient(to right, #000000, ${this.cssRgb(this.hue(), this.sat(), 100)})`,
+  );
+
+  // Thumb fill = exactly the selected color
+  readonly thumbColor = computed(() => this.cssRgb(this.hue(), this.sat(), this.val()));
+
   // Presets definition matching Figma design
   readonly presets: Preset[] = [
     { name: 'Red', r: 255, g: 55, b: 72, hex: '#FF3748', dotColor: '#FF3748' },
@@ -65,7 +84,7 @@ export class App {
     { name: 'Off', r: 0, g: 0, b: 0, hex: '#000000', dotColor: '#1e293b' },
   ];
 
-  private isDraggingSpectrum = false;
+  private isDraggingHue = false;
 
   // Settings Actions
   toggleSettings(): void {
@@ -132,6 +151,70 @@ export class App {
     this.recalculateRgbFromHsv(false);
   }
 
+  onWheelPointerDown(event: PointerEvent): void {
+    const el = event.currentTarget as HTMLElement;
+    el.setPointerCapture(event.pointerId);
+    this.isDraggingHue = true;
+    this.updateHueFromPointer(event, false);
+  }
+
+  onWheelPointerMove(event: PointerEvent): void {
+    if (!this.isDraggingHue) return;
+    this.updateHueFromPointer(event, false);
+  }
+
+  onWheelPointerUp(event: PointerEvent): void {
+    if (!this.isDraggingHue) return;
+    this.isDraggingHue = false;
+    this.updateHueFromPointer(event, true);
+  }
+
+  private updateHueFromPointer(event: PointerEvent, immediate: boolean): void {
+    const element = event.currentTarget as HTMLElement;
+    const rect = element.getBoundingClientRect();
+    const dx = event.clientX - (rect.left + rect.width / 2);
+    const dy = event.clientY - (rect.top + rect.height / 2);
+    const degrees = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+
+    this.hue.set(Math.round(degrees));
+    this.ensureWs2812Visible();
+    this.recalculateRgbFromHsv(immediate);
+  }
+
+  /** Turning the LED on from the wheel/sliders must never leave it black. */
+  private ensureWs2812Visible(): void {
+    if (!this.ws2812On()) {
+      this.ws2812On.set(true);
+    }
+    if (this.sat() === 0 && this.r() === 0 && this.g() === 0 && this.b() === 0) {
+      this.sat.set(100);
+    }
+    if (this.val() === 0) {
+      this.val.set(100);
+    }
+  }
+
+  onSatChange(value: number | string): void {
+    this.sat.set(Math.max(0, Math.min(100, Number(value))));
+    if (!this.ws2812On()) {
+      this.ws2812On.set(true);
+      if (this.val() === 0) this.val.set(100);
+    }
+    this.recalculateRgbFromHsv(false);
+  }
+
+  onValChange(value: number | string): void {
+    this.val.set(Math.max(0, Math.min(100, Number(value))));
+    if (!this.ws2812On()) {
+      this.ws2812On.set(true);
+    }
+    this.recalculateRgbFromHsv(false);
+  }
+
+  onSliderRelease(): void {
+    this.mqtt.setWs2812Color(this.r(), this.g(), this.b(), true);
+  }
+
   onRgbInputChange(channel: 'r' | 'g' | 'b', event: Event): void {
     const input = event.target as HTMLInputElement;
     let val = Math.max(0, Math.min(255, Number(input.value) || 0));
@@ -149,42 +232,6 @@ export class App {
     }
     this.updateHsvFromRgb(this.r(), this.g(), this.b());
     this.mqtt.setWs2812Color(this.r(), this.g(), this.b(), true);
-  }
-
-  // Pointer drag support for 2D spectrum (works with mouse and touch)
-  onSpectrumPointerDown(event: PointerEvent): void {
-    const el = event.currentTarget as HTMLElement;
-    el.setPointerCapture(event.pointerId);
-    this.isDraggingSpectrum = true;
-    this.updateFromPointer(event, el, false);
-  }
-
-  onSpectrumPointerMove(event: PointerEvent): void {
-    if (!this.isDraggingSpectrum) return;
-    const el = event.currentTarget as HTMLElement;
-    this.updateFromPointer(event, el, false);
-  }
-
-  onSpectrumPointerUp(event: PointerEvent): void {
-    if (this.isDraggingSpectrum) {
-      this.isDraggingSpectrum = false;
-      const el = event.currentTarget as HTMLElement;
-      this.updateFromPointer(event, el, true); // send immediate payload on pointer release
-    }
-  }
-
-  private updateFromPointer(event: PointerEvent, el: HTMLElement, immediate: boolean): void {
-    const rect = el.getBoundingClientRect();
-    const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
-    const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
-
-    const s = Math.round((x / rect.width) * 100);
-    const v = Math.round(100 - (y / rect.height) * 100);
-
-    this.sat.set(s);
-    this.val.set(v);
-    this.ws2812On.set(v > 0);
-    this.recalculateRgbFromHsv(immediate);
   }
 
   // Native color picker support for high accessibility
