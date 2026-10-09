@@ -6,11 +6,9 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
+#include "sdkconfig.h"
+#include <string.h>
 
-/* Broker connection settings; replace with the deployment's values. */
-#define MQTT_BROKER_URI "mqtts://<BROKER_HOST>:8883"
-#define MQTT_USERNAME "<USERNAME>"
-#define MQTT_PASSWORD "<PASSWORD>"
 #define MQTT_STATUS_TOPIC MQTT_TOPIC_AVAILABILITY
 
 static const char *TAG = "mqtt_manager";
@@ -102,10 +100,10 @@ esp_err_t mqtt_manager_start(void)
     }
 
     const esp_mqtt_client_config_t mqtt_config = {
-        .broker.address.uri = MQTT_BROKER_URI,
+        .broker.address.uri = CONFIG_RM_LED_MQTT_BROKER_URI,
         .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
-        .credentials.username = MQTT_USERNAME,
-        .credentials.authentication.password = MQTT_PASSWORD,
+        .credentials.username = CONFIG_RM_LED_MQTT_USERNAME,
+        .credentials.authentication.password = CONFIG_RM_LED_MQTT_PASSWORD,
         .credentials.client_id = MQTT_DEVICE_ID,
         .session.last_will = {
             .topic = MQTT_STATUS_TOPIC,

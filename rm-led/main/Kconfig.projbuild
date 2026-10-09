@@ -1,0 +1,37 @@
+menu "RM LED Configuration"
+
+    config RM_LED_WIFI_SSID
+        string "Wi-Fi SSID (ej.: Casa_2G)"
+        default ""
+        help
+            Escribe el nombre de la red Wi-Fi de 2.4 GHz, sin comillas.
+
+    config RM_LED_WIFI_PASSWORD
+        string "Wi-Fi password (sin comillas)"
+        default ""
+        help
+            Escribe la contraseña de la red Wi-Fi. Se guarda en el archivo
+            local sdkconfig y también queda compilada en el firmware.
+
+    config RM_LED_MQTT_BROKER_URI
+        string "MQTT broker URI (ej.: mqtts://broker.example.com:8883)"
+        default ""
+        help
+            Escribe la dirección TLS de tu broker MQTT, incluyendo el puerto.
+            El formato habitual es mqtts://servidor:8883.
+
+    config RM_LED_MQTT_USERNAME
+        string "MQTT username (usuario del broker)"
+        default ""
+        help
+            Escribe el usuario MQTT que usará esta ESP32-S3 para autenticarse
+            en el broker.
+
+    config RM_LED_MQTT_PASSWORD
+        string "MQTT password (sin comillas)"
+        default ""
+        help
+            Escribe la contraseña MQTT correspondiente al usuario del broker.
+            Se guarda en sdkconfig y también queda compilada en el firmware.
+
+endmenu

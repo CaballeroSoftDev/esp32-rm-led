@@ -7,9 +7,8 @@
 #include "esp_netif.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
+#include "sdkconfig.h"
 
-#define WIFI_NETWORK_SSID "SSID"
-#define WIFI_NETWORK_PASSWORD "PASSWORD"
 /* Event-group signals consumed by wifi_manager_wait_for_connection(). */
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAILED_BIT BIT1
@@ -157,8 +156,8 @@ esp_err_t wifi_manager_start(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = WIFI_NETWORK_SSID,
-            .password = WIFI_NETWORK_PASSWORD,
+            .ssid = CONFIG_RM_LED_WIFI_SSID,
+            .password = CONFIG_RM_LED_WIFI_PASSWORD,
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
         },
     };

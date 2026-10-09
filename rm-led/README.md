@@ -33,7 +33,13 @@ Ambos LEDs se inicializan apagados.
 
 ## Configuración
 
-Antes de compilar, configura los valores locales de Wi-Fi en `main/services/connectivity/wifi_manager.c` y los de MQTT en `main/services/connectivity/mqtt_manager.c` (broker, usuario y contraseña).
+Configura las credenciales localmente con:
+
+```bash
+idf.py menuconfig
+```
+
+Abre **RM LED Configuration** y completa el SSID y la contraseña Wi-Fi, además de la URI TLS del broker MQTT, el usuario y la contraseña. La URI debe usar `mqtts://` y normalmente el puerto `8883`.
 
 El cliente usa MQTT sobre TLS en el puerto 8883. En EMQX, configura el client ID `rm-led-esp32s3` y los permisos descritos arriba.
 
